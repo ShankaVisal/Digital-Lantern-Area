@@ -12,6 +12,7 @@ type FilterKey = 'all' | 'sinhala' | 'english' | 'gold' | 'white';
 
 type Props = {
   lanterns: Lantern[];
+  feedSource?: 'sample' | 'shared';
 };
 
 const filters: { value: FilterKey; label: string }[] = [
@@ -22,7 +23,7 @@ const filters: { value: FilterKey; label: string }[] = [
   { value: 'white', label: 'White Lanterns' }
 ];
 
-export function LanternGallery({ lanterns }: Props) {
+export function LanternGallery({ lanterns, feedSource = 'sample' }: Props) {
   const [filter, setFilter] = useState<FilterKey>('all');
 
   const filteredLanterns = useMemo(() => {
@@ -46,6 +47,10 @@ export function LanternGallery({ lanterns }: Props) {
           {filteredLanterns.length} lanterns shown
         </div>
       </div>
+
+      <p className="text-xs uppercase tracking-[0.24em] text-white/45">
+        {feedSource === 'shared' ? 'Live wishes from the shared production feed' : 'Sample wishes until shared storage is configured'}
+      </p>
 
       <div className="flex flex-wrap gap-2">
         {filters.map((option) => (

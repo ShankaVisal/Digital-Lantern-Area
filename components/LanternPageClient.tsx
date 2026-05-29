@@ -41,12 +41,44 @@ export function LanternPageClient() {
   const sharedLantern = useMemo(() => createQueryLantern(new URLSearchParams(searchParams.toString())), [searchParams]);
   const [activeLantern, setActiveLantern] = useState<Lantern | null>(sharedLantern);
   const [lanterns, setLanterns] = useState<Lantern[]>(() => (sharedLantern ? [sharedLantern, ...sampleLanterns] : sampleLanterns));
+  const [feedSource, setFeedSource] = useState<'sample' | 'shared'>('sample');
   const [creatorKey, setCreatorKey] = useState(0);
   const [shareUrl, setShareUrl] = useState('');
 
   useEffect(() => {
     setShareUrl(window.location.href);
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadLanterns() {
+      try {
+        const response = await fetch('/api/lanterns', {
+          signal: controller.signal,
+          cache: 'no-store'
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as { lanterns?: Lantern[]; source?: 'sample' | 'shared' };
+        const nextLanterns = Array.isArray(data.lanterns) ? data.lanterns : sampleLanterns;
+
+        setFeedSource(data.source ?? 'sample');
+        setLanterns(sharedLantern ? [sharedLantern, ...nextLanterns.filter((item) => item.id !== sharedLantern.id)] : nextLanterns);
+      } catch {
+        if (!controller.signal.aborted) {
+          setFeedSource('sample');
+        }
+      }
+    }
+
+    void loadLanterns();
+
+    return () => controller.abort();
+  }, [sharedLantern]);
 
   const initialValues = useMemo<Partial<LanternDraft> | undefined>(() => {
     if (!sharedLantern) {
@@ -80,10 +112,42 @@ export function LanternPageClient() {
     setShareUrl(window.location.origin + `${pathname}?${params.toString()}`);
   }
 
-  function handleCreate(lantern: Lantern) {
+  async function handleCreate(lantern: Lantern) {
     setActiveLantern(lantern);
     setLanterns((current) => [lantern, ...current.filter((item) => item.id !== lantern.id)]);
     pushSharedUrl(lantern);
+
+    try {
+      const response = await fetch('/api/lanterns', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(lantern)
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = (await response.json()) as { lantern?: Lantern };
+      if (data.lantern) {
+        setLanterns((current) => [data.lantern as Lantern, ...current.filter((item) => item.id !== data.lantern?.id)]);
+      }
+
+      const refreshed = await fetch('/api/lanterns', { cache: 'no-store' });
+      if (!refreshed.ok) {
+        return;
+      }
+
+      const refreshedData = (await refreshed.json()) as { lanterns?: Lantern[]; source?: 'sample' | 'shared' };
+      if (Array.isArray(refreshedData.lanterns)) {
+        setFeedSource(refreshedData.source ?? 'sample');
+        setLanterns(refreshedData.lanterns);
+      }
+    } catch {
+      setFeedSource('sample');
+    }
   }
 
   function handleCreateAnother() {
@@ -100,7 +164,7 @@ export function LanternPageClient() {
       <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-6">
         <LanternHero />
 
-        <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] xl:grid-cols-[1.4fr_0.6fr]">
           <div className="space-y-6">
             <LanternCreator key={creatorKey} initialValues={initialValues} onCreate={handleCreate} />
             <LanternMeaning />
@@ -111,7 +175,7 @@ export function LanternPageClient() {
           </div>
         </section>
 
-        <LanternGallery lanterns={lanterns} />
+        <LanternGallery lanterns={lanterns} feedSource={feedSource} />
         <TaproBranding />
       </div>
     </main>
