@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 
 import { sampleLanterns } from '@/data/sampleLanterns';
 import type { Lantern, LanternColor, LanternLanguage, LanternStyle } from '@/types/lantern';
@@ -7,12 +7,53 @@ import { lanternColorOptions, lanternStyleOptions } from '@/data/lanternStyles';
 const STORAGE_KEY = 'digital-vesak-lantern-area:public-lanterns';
 const MAX_LANTERNS = 120;
 
+let redisClient: Redis | null | undefined;
+
 const allowedLanguages = new Set<LanternLanguage>(['english', 'sinhala']);
 const allowedStyles = new Set<LanternStyle>(lanternStyleOptions.map((option) => option.value));
 const allowedColors = new Set<LanternColor>(lanternColorOptions.map((option) => option.value));
 
 export function hasSharedStorage() {
-  return Boolean(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+  const { url, token } = getStorageConfig();
+  return Boolean(url && token);
+}
+
+function cleanEnvValue(value: string | undefined) {
+  if (!value) {
+    return '';
+  }
+
+  const trimmed = value.trim();
+  if (trimmed.length < 2) {
+    return trimmed;
+  }
+
+  const hasDoubleQuotes = trimmed.startsWith('"') && trimmed.endsWith('"');
+  const hasSingleQuotes = trimmed.startsWith("'") && trimmed.endsWith("'");
+
+  return hasDoubleQuotes || hasSingleQuotes ? trimmed.slice(1, -1).trim() : trimmed;
+}
+
+function getStorageConfig() {
+  const url = cleanEnvValue(process.env.KV_REST_API_URL) || cleanEnvValue(process.env.UPSTASH_REDIS_REST_URL);
+  const token = cleanEnvValue(process.env.KV_REST_API_TOKEN) || cleanEnvValue(process.env.UPSTASH_REDIS_REST_TOKEN);
+
+  return { url, token };
+}
+
+function getRedisClient() {
+  if (redisClient !== undefined) {
+    return redisClient;
+  }
+
+  const { url, token } = getStorageConfig();
+  if (!url || !token) {
+    redisClient = null;
+    return redisClient;
+  }
+
+  redisClient = new Redis({ url, token });
+  return redisClient;
 }
 
 function normalizeLantern(lantern: Lantern): Lantern {
@@ -55,19 +96,28 @@ export function isLanternInput(value: unknown): value is Lantern {
 }
 
 export async function getPublicLanterns(): Promise<Lantern[]> {
-  if (!hasSharedStorage()) {
+  const redis = getRedisClient();
+  if (!redis) {
     return sampleLanterns;
   }
 
   try {
-    const storedLanterns = (await kv.lrange(STORAGE_KEY, 0, MAX_LANTERNS - 1)) as string[];
+    const storedLanterns = (await redis.lrange(STORAGE_KEY, 0, MAX_LANTERNS - 1)) as unknown[];
 
     if (!Array.isArray(storedLanterns) || storedLanterns.length === 0) {
-      return sampleLanterns;
+      return [];
     }
 
     const parsedLanterns = storedLanterns
       .map((item) => {
+        if (isLanternInput(item)) {
+          return normalizeLantern(item);
+        }
+
+        if (typeof item !== 'string') {
+          return null;
+        }
+
         try {
           const parsed = JSON.parse(item);
           return isLanternInput(parsed) ? normalizeLantern(parsed) : null;
@@ -77,22 +127,23 @@ export async function getPublicLanterns(): Promise<Lantern[]> {
       })
       .filter((item): item is Lantern => item !== null);
 
-    return parsedLanterns.length > 0 ? parsedLanterns : sampleLanterns;
+    return parsedLanterns;
   } catch {
-    return sampleLanterns;
+    return [];
   }
 }
 
 export async function savePublicLantern(lantern: Lantern): Promise<Lantern> {
   const nextLantern = normalizeLantern(lantern);
 
-  if (!hasSharedStorage()) {
+  const redis = getRedisClient();
+  if (!redis) {
     return nextLantern;
   }
 
   try {
-    await kv.lpush(STORAGE_KEY, JSON.stringify(nextLantern));
-    await kv.ltrim(STORAGE_KEY, 0, MAX_LANTERNS - 1);
+    await redis.lpush(STORAGE_KEY, nextLantern);
+    await redis.ltrim(STORAGE_KEY, 0, MAX_LANTERNS - 1);
   } catch {
     return nextLantern;
   }

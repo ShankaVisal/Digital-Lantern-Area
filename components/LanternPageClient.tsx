@@ -40,7 +40,7 @@ export function LanternPageClient() {
 
   const sharedLantern = useMemo(() => createQueryLantern(new URLSearchParams(searchParams.toString())), [searchParams]);
   const [activeLantern, setActiveLantern] = useState<Lantern | null>(sharedLantern);
-  const [lanterns, setLanterns] = useState<Lantern[]>(() => (sharedLantern ? [sharedLantern, ...sampleLanterns] : sampleLanterns));
+  const [lanterns, setLanterns] = useState<Lantern[]>(() => (sharedLantern ? [sharedLantern] : []));
   const [feedSource, setFeedSource] = useState<'sample' | 'shared'>('sample');
   const [creatorKey, setCreatorKey] = useState(0);
   const [shareUrl, setShareUrl] = useState('');
@@ -71,6 +71,7 @@ export function LanternPageClient() {
       } catch {
         if (!controller.signal.aborted) {
           setFeedSource('sample');
+          setLanterns(sharedLantern ? [sharedLantern, ...sampleLanterns] : sampleLanterns);
         }
       }
     }
