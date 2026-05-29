@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background: #050816;
+  color: #f8fafc;
+  font-family: Inter, "Noto Sans Sinhala", sans-serif;
+}
+
+::selection {
+  background: rgba(246, 200, 95, 0.35);
+  color: #fffdf5;
+}
+
+.vesak-shell {
+  background-image:
+    radial-gradient(circle at 50% 8%, rgba(255, 245, 204, 0.12), transparent 18%),
+    radial-gradient(circle at 10% 20%, rgba(255, 184, 77, 0.08), transparent 18%),
+    radial-gradient(circle at 85% 18%, rgba(255, 159, 216, 0.08), transparent 16%),
+    linear-gradient(180deg, rgba(7, 9, 21, 0.96), rgba(5, 8, 22, 1));
+}
+
+.glass-panel {
+  @apply border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl;
+}
+
+.gold-panel {
+  @apply border border-amber-200/20 bg-gradient-to-br from-white/10 via-white/5 to-amber-200/10 shadow-[0_0_0_1px_rgba(255,255,255,0.03),0_25px_90px_rgba(0,0,0,0.35)];
+}
+
+.vesak-text-glow {
+  text-shadow: 0 0 24px rgba(255, 231, 165, 0.35), 0 0 60px rgba(255, 184, 77, 0.12);
+}
+
+.grid-fade {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 70px 70px;
+  mask-image: radial-gradient(circle at center, black 35%, transparent 85%);
+}
+
+.lantern-sheen {
+  background: radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.25), transparent 35%), radial-gradient(circle at 50% 50%, rgba(246, 200, 95, 0.4), transparent 60%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
