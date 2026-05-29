@@ -44,10 +44,26 @@ export function LanternPageClient() {
   const [feedSource, setFeedSource] = useState<'sample' | 'shared'>('sample');
   const [creatorKey, setCreatorKey] = useState(0);
   const [shareUrl, setShareUrl] = useState('');
+  const [shouldScrollToPreview, setShouldScrollToPreview] = useState(false);
 
   useEffect(() => {
     setShareUrl(window.location.href);
   }, []);
+
+  useEffect(() => {
+    if (!shouldScrollToPreview || !activeLantern) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      const preview = document.getElementById('preview');
+      preview?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+
+    setShouldScrollToPreview(false);
+
+    return () => window.clearTimeout(timer);
+  }, [activeLantern, shouldScrollToPreview]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -115,6 +131,7 @@ export function LanternPageClient() {
 
   async function handleCreate(lantern: Lantern) {
     setActiveLantern(lantern);
+    setShouldScrollToPreview(true);
     setLanterns((current) => [lantern, ...current.filter((item) => item.id !== lantern.id)]);
     pushSharedUrl(lantern);
 
