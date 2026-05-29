@@ -1,6 +1,18 @@
 import type { Metadata } from 'next';
+import { Noto_Sans_Sinhala, Sora } from 'next/font/google';
 
 import '@/app/globals.css';
+import { BackgroundMusic } from '@/components/BackgroundMusic';
+
+const sora = Sora({
+  subsets: ['latin'],
+  variable: '--font-display'
+});
+
+const notoSinhala = Noto_Sans_Sinhala({
+  subsets: ['sinhala', 'latin'],
+  variable: '--font-sinhala'
+});
 
 export const metadata: Metadata = {
   title: 'Tapro IT Digital Vesak Lantern Area',
@@ -10,8 +22,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className="bg-vesak-midnight text-white antialiased">
+      <body className={`${sora.variable} ${notoSinhala.variable} bg-vesak-midnight text-white antialiased`}>
         {children}
+        <BackgroundMusic />
       </body>
     </html>
   );

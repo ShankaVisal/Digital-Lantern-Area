@@ -7,10 +7,11 @@ import { LanternHero } from '@/components/LanternHero';
 import { LanternCreator } from '@/components/LanternCreator';
 import { LanternPreview } from '@/components/LanternPreview';
 import { LanternGallery } from '@/components/LanternGallery';
-import { LanternMeaning } from '@/components/LanternMeaning';
+// LanternMeaning removed per user request
 import { TaproBranding } from '@/components/TaproBranding';
 import { sampleLanterns } from '@/data/sampleLanterns';
 import type { Lantern, LanternColor, LanternDraft, LanternLanguage, LanternStyle } from '@/types/lantern';
+import { SectionReveal } from '@/components/magicui/SectionReveal';
 
 function createQueryLantern(searchParams: URLSearchParams): Lantern | null {
   const name = searchParams.get('name')?.trim();
@@ -180,21 +181,28 @@ export function LanternPageClient() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_30%)]" />
       <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:64px_64px]" />
       <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <LanternHero />
+        <SectionReveal>
+          <LanternHero />
+        </SectionReveal>
 
-        <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] xl:grid-cols-[1.4fr_0.6fr]">
+        <SectionReveal delay={0.08}>
+          <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] xl:grid-cols-[1.4fr_0.6fr]">
           <div className="space-y-6">
             <LanternCreator key={creatorKey} initialValues={initialValues} onCreate={handleCreate} />
-            <LanternMeaning />
           </div>
 
           <div className="space-y-6">
             {activeLantern ? <LanternPreview lantern={activeLantern} shareUrl={shareUrl || pathname} onCreateAnother={handleCreateAnother} /> : <div className="flex min-h-[28rem] items-center justify-center rounded-[2rem] border border-white/10 bg-white/5 p-8 text-center text-white/60 shadow-[0_24px_100px_rgba(0,0,0,0.32)] backdrop-blur-xl"><div className="max-w-sm space-y-3"><p className="text-lg font-semibold text-white">Your lantern preview will appear here</p><p className="text-sm leading-7 text-white/60">Light a lantern to see the animated preview, then download or share it with friends.</p></div></div>}
           </div>
-        </section>
+          </section>
+        </SectionReveal>
 
-        <LanternGallery lanterns={lanterns} feedSource={feedSource} />
-        <TaproBranding />
+        <SectionReveal delay={0.12}>
+          <LanternGallery lanterns={lanterns} feedSource={feedSource} />
+        </SectionReveal>
+        <SectionReveal delay={0.16}>
+          <TaproBranding />
+        </SectionReveal>
       </div>
     </main>
   );

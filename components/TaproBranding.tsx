@@ -1,4 +1,7 @@
+"use client";
+
 import { ArrowUpRight, Mail, Phone } from 'lucide-react';
+import Tilt from 'react-parallax-tilt';
 
 import { Button } from '@/components/ui/button';
 
@@ -17,6 +20,7 @@ export function TaproBranding() {
         </Button>
       </div>
 
+      <Tilt tiltMaxAngleX={6} tiltMaxAngleY={6} perspective={1200} scale={1.01} className="rounded-[1.7rem]">
       <div className="space-y-4 rounded-[1.7rem] border border-white/10 bg-white/5 p-5">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-white/80"><Phone className="h-4 w-4 text-amber-200" /> Phone</div>
@@ -31,6 +35,7 @@ export function TaproBranding() {
           <p className="text-sm text-white/65">www.taproit.com</p>
         </div>
       </div>
+      </Tilt>
     </section>
   );
 }
